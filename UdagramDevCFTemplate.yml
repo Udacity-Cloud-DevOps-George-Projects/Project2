@@ -1,0 +1,594 @@
+Parameters:
+
+    EnvironmentName:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: An environment name that will be prefixed to resource names
+        Default: /Dev/Udagram/EnvironmentName
+
+    S3BucketName:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Bucket Name which will be used to upload the code 
+        Default: /Dev/Udagram/S3BucketName    
+    
+    AWSManagedPolicyARNForS3:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: AWS S3 Managed Policy ARN
+        Default: /Dev/Udagram/AWSManagedPolicyARNForS3 
+
+    AWSManagedPolicyARNForCF:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: AWS CloudFormation Managed Policy ARN
+        Default: /Dev/Udagram/AWSManagedPolicyARNForCF        
+        
+    AWSManagedPolicyARNForSSM:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: AWS SSM Managed Policy ARN
+        Default: /Dev/Udagram/AWSManagedPolicyARNForSSM  
+       
+    VpcCIDR:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: IP range (CIDR notation) for this VPC
+        Default: /Dev/Udagram/VpcCIDR
+
+    PublicSubnet1CIDR:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: IP range (CIDR notation) for the public subnet in the first Availability Zone
+        Default: /Dev/Udagram/PublicSubnet1CIDR
+
+    PublicSubnet2CIDR:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Default: /Dev/Udagram/PublicSubnet2CIDR
+
+    PrivateSubnet1CIDR:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: IP range (CIDR notation) for the private subnet in the first Availability Zone
+        Default: /Dev/Udagram/PrivateSubnet1CIDR
+
+    PrivateSubnet2CIDR:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: IP range (CIDR notation) for the private subnet in the second Availability Zone
+        Default: /Dev/Udagram/PrivateSubnet2CIDR
+       
+    WebAppImageID:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Web Servers AWS Image ID
+        Default: /Dev/Udagram/WebAppImageID
+    
+    WebAppInstanceType:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Web Servers AWS Instance Type
+        Default: /Dev/Udagram/WebAppInstanceType
+        
+    WebAppDiskSize:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Size of Web server disk
+        Default: /Dev/Udagram/WebAppDiskSize
+        
+    LinuxHostsSSHKey:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: SSH Key Name for Linux Hosts
+        Default: /Dev/Udagram/LinuxSSHKey
+        
+    BastionHostImageID:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Bastion Host AWS Image ID
+        Default: /Dev/Udagram/BastionHostImageID
+
+    BastionHostInstanceType:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Bastion Host AWS Instance Type
+        Default: /Dev/Udagram/BastionHostInstanceType
+
+    BastionHostDiskSize:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Size of Bastion Host disk
+        Default: /Dev/Udagram/BastionHostDiskSize
+
+Resources:
+
+    S3Bucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            AccessControl: PublicRead
+            BucketName: !Ref S3BucketName
+
+    BucketPolicy: 
+        Type: AWS::S3::BucketPolicy
+        DependsOn: S3Bucket
+        Properties:
+            Bucket: !Ref S3Bucket
+            PolicyDocument:
+                Id: BucketPolicy
+                Version: 2012-10-17
+                Statement: 
+                    - Sid: Stmt1590951750878
+                      Effect: Allow
+                      Principal: "*"
+                      Action: "s3:*"
+                      Resource: !GetAtt [S3Bucket, Arn]
+ 
+    WebServerIAMRoleForEC2:
+        Type: 'AWS::IAM::Role'
+        Properties:
+            RoleName: WebServerIAMRoleForEC2
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ec2.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+            Path: /
+            ManagedPolicyArns:
+                - !Ref AWSManagedPolicyARNForS3
+                - !Ref AWSManagedPolicyARNForCF
+    
+    BastionHostRoleForEC2:
+        Type: 'AWS::IAM::Role'
+        Properties:
+            RoleName: BastionHostRoleForEC2
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ec2.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+            Path: /
+            ManagedPolicyArns:
+                - !Ref AWSManagedPolicyARNForSSM
+ 
+    VPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: !Ref VpcCIDR
+            EnableDnsHostnames: true
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+    InternetGateway:
+        Type: AWS::EC2::InternetGateway
+        Properties:
+            Tags:
+                - Key: Name
+                  Value: !Ref EnvironmentName
+
+    InternetGatewayAttachment:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            InternetGatewayId: !Ref InternetGateway
+            VpcId: !Ref VPC
+
+    PublicSubnet1:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 0, !GetAZs '' ]
+            CidrBlock: !Ref PublicSubnet1CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Public Subnet (AZ1)
+
+    PublicSubnet2:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 1, !GetAZs '' ]
+            CidrBlock: !Ref PublicSubnet2CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Public Subnet (AZ2)
+
+    PrivateSubnet1:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 0, !GetAZs '' ]
+            CidrBlock: !Ref PrivateSubnet1CIDR
+            MapPublicIpOnLaunch: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ1)
+
+    PrivateSubnet2:
+        Type: AWS::EC2::Subnet
+        Properties:
+            VpcId: !Ref VPC
+            AvailabilityZone: !Select [ 1, !GetAZs '' ]
+            CidrBlock: !Ref PrivateSubnet2CIDR
+            MapPublicIpOnLaunch: false
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Subnet (AZ2)
+
+    NatGateway1EIP:
+        Type: AWS::EC2::EIP
+        DependsOn: InternetGatewayAttachment
+        Properties:
+            Domain: vpc
+
+    NatGateway2EIP:
+        Type: AWS::EC2::EIP
+        DependsOn: InternetGatewayAttachment
+        Properties:
+            Domain: vpc
+
+    NatGateway1:
+        Type: AWS::EC2::NatGateway
+        Properties:
+            AllocationId: !GetAtt NatGateway1EIP.AllocationId
+            SubnetId: !Ref PublicSubnet1
+
+    NatGateway2:
+        Type: AWS::EC2::NatGateway
+        Properties:
+            AllocationId: !GetAtt NatGateway2EIP.AllocationId
+            SubnetId: !Ref PublicSubnet2
+
+    PublicRouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Public Routes
+
+    DefaultPublicRoute:
+        Type: AWS::EC2::Route
+        DependsOn: InternetGatewayAttachment
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId: !Ref InternetGateway
+
+    PublicSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            SubnetId: !Ref PublicSubnet1
+
+    PublicSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            SubnetId: !Ref PublicSubnet2
+
+    PrivateRouteTable1:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Routes (AZ1)
+
+    DefaultPrivateRoute1:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref PrivateRouteTable1
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId: !Ref NatGateway1
+
+    PrivateSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PrivateRouteTable1
+            SubnetId: !Ref PrivateSubnet1
+
+    PrivateRouteTable2:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref VPC
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+    DefaultPrivateRoute2:
+        Type: AWS::EC2::Route
+        Properties:
+            RouteTableId: !Ref PrivateRouteTable2
+            DestinationCidrBlock: 0.0.0.0/0
+            NatGatewayId: !Ref NatGateway2
+
+    PrivateSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PrivateRouteTable2
+            SubnetId: !Ref PrivateSubnet2
+            
+    LBSecGroup:
+        Type: AWS::EC2::SecurityGroup
+        DependsOn: VPC
+        Properties:
+          GroupDescription: Allow http to our load balancer
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          SecurityGroupEgress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+
+    WebServerSecGroup:
+        Type: AWS::EC2::SecurityGroup
+        DependsOn: VPC
+        Properties:
+          GroupDescription: Allow http to our hosts and SSH from local only
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+          SecurityGroupEgress:
+          - IpProtocol: tcp
+            FromPort: 0
+            ToPort: 65535
+            CidrIp: 0.0.0.0/0
+    
+    WebServerInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        DependsOn: WebServerIAMRoleForEC2
+        Properties:
+            Path: /
+            Roles: 
+                - !Ref WebServerIAMRoleForEC2
+
+    WebAppLaunchConfig:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        DependsOn: 
+            - VPC
+            - S3Bucket
+        Properties:
+          UserData:
+            Fn::Base64: !Sub |
+              #!/bin/bash
+              #Install Apache and AWS CLI packages
+              apt-get update -y
+              apt-get install unzip awscli apache2 -y
+              #Start Apache Sevice
+              systemctl start apache2.service
+              
+              #Alternative method to get S3 Bucket name by query CloudFormation Stack Resources. Web App Servers need to have IAM read only role to CloudFormation.
+              #StackS3BuckName=`aws cloudformation list-stack-resources --stack ${AWS::StackName} --region ${AWS::Region} |  grep -A1  "LogicalResourceId.*S3Bucket" | grep PhysicalResourceId | awk -F ":" '{print $2}' | cut -f 2 -d '"'`
+              
+              #Get S3 Bucket Name and perform copy of the files to Apache html directory 
+              aws s3 cp s3://${S3Bucket}/ /var/www/html/  --recursive
+              unzip -o /var/www/html/*.zip  -d /var/www/html/
+              
+              #Add cron job which synchronize with S3 bucket every 1 minute for any uploaded files  
+              crontab<<EOF
+              $(crontab -l)
+              * * * * * aws s3 sync s3://${S3Bucket}/  /var/www/html/ && unzip -o /var/www/html/*.zip  -d /var/www/html/
+              EOF
+          ImageId: !Ref WebAppImageID
+          KeyName: !Ref LinuxHostsSSHKey
+          SecurityGroups:
+          - Ref: WebServerSecGroup
+          InstanceType: !Ref WebAppInstanceType
+          IamInstanceProfile: !Ref WebServerInstanceProfile
+          BlockDeviceMappings:
+          - DeviceName: "/dev/sdk"
+            Ebs:
+              VolumeSize: !Ref WebAppDiskSize
+
+    WebAppGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        DependsOn: VPC
+        Properties:
+          VPCZoneIdentifier:
+            - !Ref PrivateSubnet1
+            - !Ref PrivateSubnet2
+          LaunchConfigurationName:
+            Ref: WebAppLaunchConfig
+          MinSize: '4'
+          MaxSize: '4'
+          TargetGroupARNs:
+          - Ref: WebAppTargetGroup
+
+    WebAppLB:
+        Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+        DependsOn: VPC
+        Properties:
+          Subnets: 
+            - !Ref PublicSubnet1
+            - !Ref PublicSubnet2
+          SecurityGroups:
+          - Ref: LBSecGroup
+
+    Listener:
+        Type: AWS::ElasticLoadBalancingV2::Listener
+        DependsOn: VPC
+        Properties:
+          DefaultActions:
+          - Type: forward
+            TargetGroupArn:
+              Ref: WebAppTargetGroup
+          LoadBalancerArn:
+            Ref: WebAppLB
+          Port: '80'
+          Protocol: HTTP
+
+    ALBListenerRule:
+          Type: AWS::ElasticLoadBalancingV2::ListenerRule
+          DependsOn: VPC
+          Properties:
+            Actions:
+            - Type: forward
+              TargetGroupArn: !Ref 'WebAppTargetGroup'
+            Conditions:
+            - Field: path-pattern
+              Values: [/]
+            ListenerArn: !Ref 'Listener'
+            Priority: 1
+
+    WebAppTargetGroup:
+        Type: AWS::ElasticLoadBalancingV2::TargetGroup
+        DependsOn: VPC
+        Properties:
+          HealthCheckIntervalSeconds: 10
+          HealthCheckPath: /
+          HealthCheckProtocol: HTTP
+          HealthCheckTimeoutSeconds: 8
+          HealthyThresholdCount: 2
+          Port: 80
+          Protocol: HTTP
+          UnhealthyThresholdCount: 5
+          VpcId: !Ref VPC
+
+    BastionHostInstanceProfile:
+        Type: AWS::IAM::InstanceProfile
+        DependsOn: BastionHostRoleForEC2
+        Properties:
+            Path: /
+            Roles: 
+                - !Ref BastionHostRoleForEC2
+ 
+    BastionHostSecGroup:
+        Type: AWS::EC2::SecurityGroup
+        DependsOn: VPC
+        Properties:
+          GroupDescription: Allow SSH from Public
+          VpcId: !Ref VPC
+          SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 0.0.0.0/0
+            
+    BastionHost: 
+        Type: AWS::EC2::Instance
+        DependsOn: 
+            - BastionHostSecGroup
+            - BastionHostInstanceProfile
+        Properties:
+            UserData:
+              Fn::Base64: !Sub |
+                #!/bin/bash
+                
+                #Install AWS CLI and jq packages 
+                apt-get update -y
+                apt-get install awscli jq -y
+                
+                #Get BastionHost Region
+                #Alternative way to call ${AWS::Region} pseudo parameter 
+                BastionHostRegion=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region`
+                
+                #Download the SSH Key the copy it to ubuntu and root users SSH directory 
+                aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /root/.ssh/BastionPrivKey.pem
+                aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /home/ubuntu/.ssh/BastionPrivKey.pem
+                
+                #Update SSH key files permessions and ownership
+                chmod 600 /root/.ssh/BastionPrivKey.pem
+                chown ubuntu:ubuntu /home/ubuntu/.ssh/BastionPrivKey.pem
+                chmod 600 /home/ubuntu/.ssh/BastionPrivKey.pem
+                
+            ImageId: !Ref BastionHostImageID
+            KeyName: !Ref LinuxHostsSSHKey
+            InstanceType: !Ref BastionHostInstanceType
+            IamInstanceProfile: !Ref BastionHostInstanceProfile
+            BlockDeviceMappings:
+                - DeviceName: "/dev/sdk"
+                  Ebs:
+                    VolumeSize: !Ref BastionHostDiskSize
+            NetworkInterfaces: 
+                - AssociatePublicIpAddress: "true"
+                  DeviceIndex: "0"
+                  GroupSet: 
+                    - !Ref BastionHostSecGroup
+                  SubnetId: !Ref PublicSubnet1
+    
+Outputs:
+
+    S3BucketSecureURL:
+        Description: URL of the S3 Buck to be accessed from AWS Management Console 
+        Value: !Join ['', ['https://s3.console.aws.amazon.com/s3/buckets/', !Ref S3Bucket, '/?', !Ref 'AWS::Region']]
+        Export:
+          Name: !Sub ${EnvironmentName}-S3Bucket
+
+    VPC:
+        Description: A reference to the created VPC
+        Value: !Ref VPC
+        Export:
+          Name: !Sub ${EnvironmentName}-VPCID
+
+    VPCPublicRouteTable:
+        Description: Public Routing
+        Value: !Ref PublicRouteTable
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB-RT
+
+    VPCPrivateRouteTable1:
+        Description: Private Routing AZ1
+        Value: !Ref PrivateRouteTable1
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI1-RT
+
+    VPCPrivateRouteTable2:
+        Description: Private Routing AZ2
+        Value: !Ref PrivateRouteTable2
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI2-RT
+
+    PublicSubnets:
+        Description: A list of the public subnets
+        Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ]]
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB-NETS
+
+    PrivateSubnets:
+        Description: A list of the private subnets
+        Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+        Export:
+          Name: !Sub ${EnvironmentName}-PRIV-NETS
+
+    PublicSubnet1:
+        Description: A reference to the public subnet in the 1st Availability Zone
+        Value: !Ref PublicSubnet1
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB1-SN
+
+    PublicSubnet2:
+        Description: A reference to the public subnet in the 2nd Availability Zone
+        Value: !Ref PublicSubnet2
+        Export:
+          Name: !Sub ${EnvironmentName}-PUB2-SN
+
+    PrivateSubnet1:
+        Description: A reference to the private subnet in the 1st Availability Zone
+        Value: !Ref PrivateSubnet1
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI1-SN
+
+    PrivateSubnet2:
+        Description: A reference to the private subnet in the 2nd Availability Zone
+        Value: !Ref PrivateSubnet2
+        Export:
+          Name: !Sub ${EnvironmentName}-PRI2-SN
+    
+    LoadBalancerURL:
+        Description: A reference to Application Load Balancer URL
+        Value: !Join ['', ['http://', !GetAtt [WebAppLB, DNSName]]]
+        Export:
+          Name: !Sub ${EnvironmentName}-WebAppLB-URL
+
+    BastionHostPublicIP:
+        Description: A reference to Bastion Host Public IP Address
+        Value: !GetAtt BastionHost.PublicIp
+        Export:
+          Name: !Sub ${EnvironmentName}-BastionHost-PUB-IP
