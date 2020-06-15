@@ -37,6 +37,8 @@ echo "Deleting SSH key ${EnvValuesArr[2]}.pem from $HOME/.ssh directory...."
 rm $HOME/.ssh/${EnvValuesArr[2]}.pem
 
 #Delete AWS SSM Parameters
+echo ""
+echo -e "\e[1;32mTask5:\e[0m"
 echo "Deleting AWS SSM Parameters from AWS Region ${EnvValuesArr[1]}...."
 aws ssm delete-parameter --name /Dev/Udagram/EnvironmentName --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/S3BucketName --region ${EnvValuesArr[1]}
@@ -59,7 +61,7 @@ aws ssm delete-parameter --name /Dev/Udagram/BastionHostDiskSize --region ${EnvV
 
 #Delete environment parameters file
 echo ""
-echo -e "\e[1;32mTask5:\e[0m"
+echo -e "\e[1;32mTask6:\e[0m"
 echo "Deleting environment parameters file...."
 rm ./udagram-dev-variables.txt
 
