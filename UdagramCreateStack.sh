@@ -83,6 +83,7 @@ printf "Enter CloudFormation Template File Name: "
 read TemplateFile
 
 #Menu to select the AWS Region on which the environment will be created 
+echo ""
 echo 'Select AWS Region to create the environment: '
 AWSAllowedRegions=("US East (Ohio)" "US East (N. Virginia)" "US West (N. California)" "US West (Oregon)" "Canada (Central)" "Africa (Cape Town)" "Asia Pacific (Hong Kong)"  "China (Beijing)" "Europe (Frankfurt)" "Europe (Ireland)" "Middle East (Bahrain)" "South America (São Paulo)" "Quit" )
 select UserRegion in "${AWSAllowedRegions[@]}"
