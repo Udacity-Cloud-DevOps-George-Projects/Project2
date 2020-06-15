@@ -8,6 +8,7 @@ function CreateStack ()
 echo -e "\e[1;32mTask1:\e[0m"
 echo "Validating CloudFormation Template file $TemplateFile...."
 if aws cloudformation validate-template --template-body file://$TemplateFile; then
+    echo ""
     echo "Template file $TemplateFile is valid"
 else
    echo -e "\e[1;31mError:\e[0m Template file $TemplateFile is not valid"
@@ -46,6 +47,7 @@ aws ssm put-parameter --name /Dev/Udagram/PublicSubnet2CIDR --value "10.0.1.0/24
 aws ssm put-parameter --name /Dev/Udagram/PrivateSubnet1CIDR --value "10.0.2.0/24" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/PrivateSubnet2CIDR --value "10.0.3.0/24" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/WebAppImageID --value "$UbuntuImageID" --type String --overwrite --region $AWSRegion
+aws ssm put-parameter --name /Dev/Udagram/WebAppInstancesNumber --value "$WebAppIncNum" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/LinuxSSHKey --value "$SSHKeyName" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/SSHPrivateKey --type SecureString --value "$SSHKeyPair" --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/WebAppInstanceType --value "t3.micro" --type String --overwrite --region $AWSRegion
@@ -82,6 +84,10 @@ read StackName
 printf "Enter CloudFormation Template File Name: "
 read TemplateFile
 
+#Get Number of Web Application EC2 instances 
+printf "Enter Number of Web Application EC2 instances: "
+read WebAppIncNum
+
 #Menu to select the AWS Region on which the environment will be created 
 echo ""
 echo 'Select AWS Region to create the environment: '
@@ -91,62 +97,62 @@ do
     case $UserRegion in
         "US East (Ohio)")
                 AWSRegion="us-east-2"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "US East (N. Virginia)")
                 AWSRegion="us-east-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "US West (N. California)")
                 AWSRegion="us-west-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "US West (Oregon)")
                 AWSRegion="us-west-2"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Canada (Central)")
                 AWSRegion="ca-central-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Africa (Cape Town)")
                 AWSRegion="af-south-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Asia Pacific (Hong Kong)")
                 AWSRegion="ap-east-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "China (Beijing)")
                 AWSRegion="cn-north-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Europe (Frankfurt)")
                 AWSRegion="eu-central-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Europe (Ireland)")
                 AWSRegion="eu-west-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Middle East (Bahrain)")
                 AWSRegion="me-south-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "South America (São Paulo)")
                 AWSRegion="sa-east-1"
-                CreateStack $StackName $TemplateFile $AWSRegion
+                CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
         "Quit")

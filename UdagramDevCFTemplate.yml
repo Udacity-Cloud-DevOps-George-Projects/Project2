@@ -65,6 +65,11 @@ Parameters:
         Description: Size of Web server disk
         Default: /Dev/Udagram/WebAppDiskSize
         
+    WebAppInstancesNumber:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: Bucket Name which will be used to upload the code
+        Default: /Dev/Udagram/WebAppInstancesNumber
+
     LinuxHostsSSHKey:
         Type: 'AWS::SSM::Parameter::Value<String>'
         Description: SSH Key Name for Linux Hosts
@@ -396,8 +401,8 @@ Resources:
             - !Ref PrivateSubnet2
           LaunchConfigurationName:
             Ref: WebAppLaunchConfig
-          MinSize: '4'
-          MaxSize: '4'
+          MinSize: !Ref WebAppInstancesNumber
+          MaxSize: !Ref WebAppInstancesNumber
           TargetGroupARNs:
           - Ref: WebAppTargetGroup
 

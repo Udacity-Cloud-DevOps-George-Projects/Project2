@@ -51,6 +51,7 @@ aws ssm delete-parameter --name /Dev/Udagram/PublicSubnet2CIDR --region ${EnvVal
 aws ssm delete-parameter --name /Dev/Udagram/PrivateSubnet1CIDR --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/PrivateSubnet2CIDR --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/WebAppImageID --region ${EnvValuesArr[1]}
+aws ssm delete-parameter --name /Dev/Udagram/WebAppInstancesNumber --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/LinuxSSHKey --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/SSHPrivateKey --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/WebAppInstanceType --region ${EnvValuesArr[1]}
