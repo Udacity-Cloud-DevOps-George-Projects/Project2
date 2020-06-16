@@ -22,7 +22,11 @@ aws cloudformation delete-stack --stack-name ${EnvValuesArr[0]} --region ${EnvVa
 
 echo ""
 echo "Deleting Cloud Formation Stack ${EnvValuesArr[0]} on AWS Region ${EnvValuesArr[1]} has been initiated"
-echo -e "To Monitor stack deletion events run command:\e[1;34m aws cloudformation describe-stacks --stack-name ${EnvValuesArr[0]} --region ${EnvValuesArr[1]} --query \"Stacks[0].[StackName, StackStatus]\" --output text \e[0m"
+echo -e "To Monitor stack deletion events open another session and run command:\e[1;34m aws cloudformation describe-stacks --stack-name ${EnvValuesArr[0]} --region ${EnvValuesArr[1]} --query \"Stacks[0].[StackName, StackStatus]\" --output text \e[0m"
+
+#Wait until stack deletion completes
+aws cloudformation wait  stack-delete-complete --stack-name ${EnvValuesArr[0]} --region ${EnvValuesArr[1]}
+echo "Stack has been deleted"
 
 #Delete the SSH Key Pair
 echo ""
