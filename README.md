@@ -1,5 +1,6 @@
 # Deploy a high Availability Web Application using AWS CloudFormation (Project2)
 A project which creates highly available Web application infrastructure on AWS using CloudFormation template to demonstrate Infrastructure as code (IaC) concepts.
+
 The project contains 4 files:
 1) Diagram as a visual aid to understand the CloudFormation script (Udagram-Development-Architecture-on-AWS.png)
 2) AWS CloudFormation YAML template file (UdagramDevCFTemplate.yml)
