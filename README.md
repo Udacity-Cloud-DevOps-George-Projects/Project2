@@ -5,4 +5,5 @@ The project contains 4 files:
 2) AWS CloudFormation YAML template file (UdagramDevCFTemplate.yml)
 3) Infrastructure creation script (UdagramCreateStack.sh)
 4) Infrastructure cleanup script (UdagramDeleteStack.sh)
-###Full Project documentation: https://1drv.ms/w/s!AnbbEx2gmFefh1vad9fLhC-waMqn?e=5bmIRs
+
+### Full Project documentation: https://1drv.ms/w/s!AnbbEx2gmFefh1vad9fLhC-waMqn?e=5bmIRs
