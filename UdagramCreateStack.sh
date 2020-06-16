@@ -69,9 +69,12 @@ echo "Creating Cloud Formation Stack $StackName on AWS Region $AWSRegion...."
 eval $CFCreateStackCMD
 echo "Creating Cloud Formation Stack $StackName on AWS Region $AWSRegion has been initiated"
 echo ""
-echo -e "To Monitor stack creation events run command:\e[1;34m aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query \"Stacks[0].[StackName, StackStatus]\" --output text \e[0m"
+echo -e "To Monitor stack creation status open another session and run command:\e[1;34m aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query \"Stacks[0].[StackName, StackStatus]\" --output text \e[0m"
+#Wait until stack creation completes
+aws cloudformation wait  stack-create-complete --stack-name $StackName --region $AWSRegion 
+echo -e "Stack Creation has completed. Stack output are:" 
 echo ""
-echo -e "To show stack outputs when creation completes run command:\e[1;34m aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query Stacks[0].Outputs[*] --output table \e[0m" 
+aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query Stacks[0].Outputs[*] --output table
 echo ""
 /bin/echo -e "\e[1;32mDone\e[0m"
 }
