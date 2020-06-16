@@ -494,11 +494,11 @@ Resources:
                 #Alternative way to call ${AWS::Region} pseudo parameter 
                 BastionHostRegion=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region`
                 
-                #Download the SSH Key the copy it to ubuntu and root users SSH directory 
+                #Download the SSH Key then copy it to ubuntu and root users SSH directory 
                 aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /root/.ssh/BastionPrivKey.pem
                 aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /home/ubuntu/.ssh/BastionPrivKey.pem
                 
-                #Update SSH key files permessions and ownership
+                #Update SSH key files permissions and ownership
                 chmod 600 /root/.ssh/BastionPrivKey.pem
                 chown ubuntu:ubuntu /home/ubuntu/.ssh/BastionPrivKey.pem
                 chmod 600 /home/ubuntu/.ssh/BastionPrivKey.pem
