@@ -54,7 +54,7 @@ aws ssm put-parameter --name /Dev/Udagram/WebAppInstanceType --value "t3.medium"
 aws ssm put-parameter --name /Dev/Udagram/WebAppDiskSize --value "10" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/BastionHostImageID --value "$UbuntuImageID" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/BastionHostInstanceType --value "t2.micro" --type String --overwrite --region $AWSRegion
-aws ssm put-parameter --name /Dev/Udagram/BastionHostDiskSize --value "10" --type String --overwrite --region $AWSRegion
+aws ssm put-parameter --name /Dev/Udagram/BastionHostDiskSize --value "8" --type String --overwrite --region $AWSRegion
 
 #Create environment parameters file which will be used during cleanup
 echo $StackName >  ./udagram-dev-variables.txt
