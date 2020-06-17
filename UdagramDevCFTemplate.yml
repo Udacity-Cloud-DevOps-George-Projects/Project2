@@ -332,14 +332,14 @@ Resources:
           GroupDescription: Allow http to our hosts and SSH from local only
           VpcId: !Ref VPC
           SecurityGroupIngress:
-          - IpProtocol: tcp
+          - SourceSecurityGroupId: !Ref LBSecGroup
+            IpProtocol: tcp
             FromPort: 80
             ToPort: 80
-            CidrIp: 0.0.0.0/0
-          - IpProtocol: tcp
+          - SourceSecurityGroupId: !Ref BastionHostSecGroup
+            IpProtocol: tcp
             FromPort: 22
             ToPort: 22
-            CidrIp: 0.0.0.0/0
           SecurityGroupEgress:
           - IpProtocol: tcp
             FromPort: 0
@@ -382,7 +382,7 @@ Resources:
               * * * * * aws s3 sync s3://${S3Bucket}/  /var/www/html/ && unzip -o /var/www/html/*.zip  -d /var/www/html/
               EOF
           ImageId: !Ref WebAppImageID
-          KeyName: !Ref LinuxHostsSSHKey
+          #KeyName: !Ref LinuxHostsSSHKey
           SecurityGroups:
           - Ref: WebServerSecGroup
           InstanceType: !Ref WebAppInstanceType
