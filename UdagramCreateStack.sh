@@ -28,7 +28,7 @@ echo ""
 echo -e "\e[1;32mTask3:\e[0m"
 echo "Copying the SSH key to your local SSH directory. File name is $HOME/.ssh/$SSHKeyName.pem"
 echo -e "${SSHKeyPair//_/\\n}" > $HOME/.ssh/$SSHKeyName.pem
-chmod 400 $HOME/.ssh/$SSHKeyName.pem
+chmod 600 $HOME/.ssh/$SSHKeyName.pem
 echo ""
 
 #Get Ubuntu server 18.04 Image AMI from the selected AWS region
