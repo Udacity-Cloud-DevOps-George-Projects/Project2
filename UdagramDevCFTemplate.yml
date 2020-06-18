@@ -386,10 +386,11 @@ Resources:
           UserData:
             Fn::Base64: !Sub |
               #!/bin/bash
-              #Install Apache and AWS CLI packages
+              #Install unzip and Apache packages
               apt-get update -y
               apt-get install unzip apache2 -y
               
+              #Install AWS CLI v2.0.3
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip awscliv2.zip
               ./aws/install
@@ -523,10 +524,11 @@ Resources:
               Fn::Base64: !Sub |
                 #!/bin/bash
                 
-                #Install AWS CLI, unzip and jq packages 
+                #Install unzip and jq packages 
                 apt-get update -y
                 apt-get install unzip jq -y
                 
+                #Install AWS CLI v2.0.3
                 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
                 unzip awscliv2.zip
                 ./aws/install
