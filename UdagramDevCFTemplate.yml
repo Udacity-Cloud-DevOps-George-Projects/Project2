@@ -22,7 +22,7 @@ Parameters:
     
     AWSManagedPolicyARNForSSMCore:
         Type: 'AWS::SSM::Parameter::Value<String>'
-        Description: AWS S3 Managed Policy ARN
+        Description: AWS SSM Core Managed Policy ARN
         Default: /Dev/Udagram/AWSManagedPolicyARNForSSMCore 
 
     AWSManagedPolicyARNForCloudWatchAgent:
