@@ -41,7 +41,6 @@ aws ssm put-parameter --name /Dev/Udagram/EnvironmentName --value "Udagram-Dev-G
 aws ssm put-parameter --name /Dev/Udagram/S3BucketName --value "udagram-dev-code" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForS3 --value "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCF --value "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess" --type String --overwrite --region $AWSRegion
-aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMRO --value "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMCore --value "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCloudWatchAgent --value "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/VpcCIDR --value "10.0.0.0/16" --type String --overwrite --region $AWSRegion
