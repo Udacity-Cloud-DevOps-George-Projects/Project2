@@ -19,12 +19,17 @@ Parameters:
         Type: 'AWS::SSM::Parameter::Value<String>'
         Description: AWS CloudFormation Managed Policy ARN
         Default: /Dev/Udagram/AWSManagedPolicyARNForCF        
-        
-    AWSManagedPolicyARNForSSM:
+    
+    AWSManagedPolicyARNForSSMCore:
         Type: 'AWS::SSM::Parameter::Value<String>'
-        Description: AWS SSM Managed Policy ARN
-        Default: /Dev/Udagram/AWSManagedPolicyARNForSSM  
-       
+        Description: AWS S3 Managed Policy ARN
+        Default: /Dev/Udagram/AWSManagedPolicyARNForSSMCore 
+
+    AWSManagedPolicyARNForCloudWatchAgent:
+        Type: 'AWS::SSM::Parameter::Value<String>'
+        Description: AWS CloudFormation Managed Policy ARN
+        Default: /Dev/Udagram/AWSManagedPolicyARNForCloudWatchAgent  
+        
     VpcCIDR:
         Type: 'AWS::SSM::Parameter::Value<String>'
         Description: IP range (CIDR notation) for this VPC
@@ -112,41 +117,6 @@ Resources:
                       Principal: "*"
                       Action: "s3:*"
                       Resource: !GetAtt [S3Bucket, Arn]
- 
-    WebServerIAMRoleForEC2:
-        Type: 'AWS::IAM::Role'
-        Properties:
-            RoleName: WebServerIAMRoleForEC2
-            AssumeRolePolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                        Service:
-                            - ec2.amazonaws.com
-                      Action:
-                        - 'sts:AssumeRole'
-            Path: /
-            ManagedPolicyArns:
-                - !Ref AWSManagedPolicyARNForS3
-                - !Ref AWSManagedPolicyARNForCF
-    
-    BastionHostRoleForEC2:
-        Type: 'AWS::IAM::Role'
-        Properties:
-            RoleName: BastionHostRoleForEC2
-            AssumeRolePolicyDocument:
-                Version: '2012-10-17'
-                Statement:
-                    - Effect: Allow
-                      Principal:
-                        Service:
-                            - ec2.amazonaws.com
-                      Action:
-                        - 'sts:AssumeRole'
-            Path: /
-            ManagedPolicyArns:
-                - !Ref AWSManagedPolicyARNForSSM
  
     VPC:
         Type: AWS::EC2::VPC
@@ -307,7 +277,60 @@ Resources:
         Properties:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
-            
+
+    WebServerIAMRoleForEC2:
+        Type: 'AWS::IAM::Role'
+        Properties:
+            RoleName: WebServerIAMRoleForEC2
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ec2.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+            Path: /
+            ManagedPolicyArns:
+                - !Ref AWSManagedPolicyARNForS3
+                - !Ref AWSManagedPolicyARNForCF
+                - !Ref AWSManagedPolicyARNForSSMCore
+                - !Ref AWSManagedPolicyARNForCloudWatchAgent
+                    
+    BastionHostRoleForEC2:
+        Type: 'AWS::IAM::Role'
+        Properties:
+            RoleName: BastionHostRoleForEC2
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - ec2.amazonaws.com
+                      Action:
+                        - 'sts:AssumeRole'
+            Path: /
+    
+    BastionHostSSMPolicy:
+        Type: 'AWS::IAM::Policy'
+        Properties:
+            PolicyName: BastionHostSSMPolicy
+            PolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - 
+                      Effect: Allow
+                      Action:
+                         - ssm:GetParametersByPath
+                         - ssm:GetParameters
+                         - ssm:GetParameter
+                         - ssm:StartSession
+                      Resource: "*"    
+            Roles: 
+                - !Ref BastionHostRoleForEC2
+           
     LBSecGroup:
         Type: AWS::EC2::SecurityGroup
         DependsOn: VPC
@@ -365,10 +388,22 @@ Resources:
               #!/bin/bash
               #Install Apache and AWS CLI packages
               apt-get update -y
-              apt-get install unzip awscli apache2 -y
+              apt-get install unzip apache2 -y
+              
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+              
               #Start Apache Sevice
               systemctl start apache2.service
               
+              #Install SSM Agent 
+              snap install amazon-ssm-agent --classic
+              
+              #Install Session Manager
+              curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+              dpkg -i session-manager-plugin.deb
+                           
               #Alternative method to get S3 Bucket name by query CloudFormation Stack Resources. Web App Servers need to have IAM read only role to CloudFormation.
               #StackS3BuckName=`aws cloudformation list-stack-resources --stack ${AWS::StackName} --region ${AWS::Region} |  grep -A1  "LogicalResourceId.*S3Bucket" | grep PhysicalResourceId | awk -F ":" '{print $2}' | cut -f 2 -d '"'`
               
@@ -379,8 +414,9 @@ Resources:
               #Add cron job which synchronize with S3 bucket every 1 minute for any uploaded files  
               crontab<<EOF
               $(crontab -l)
-              * * * * * aws s3 sync s3://${S3Bucket}/  /var/www/html/ && unzip -o /var/www/html/*.zip  -d /var/www/html/
+              * * * * * /usr/local/bin/aws s3 sync s3://${S3Bucket}/  /var/www/html/ && unzip -o /var/www/html/*.zip  -d /var/www/html/
               EOF
+              
           ImageId: !Ref WebAppImageID
           #KeyName: !Ref LinuxHostsSSHKey
           SecurityGroups:
@@ -486,23 +522,35 @@ Resources:
               Fn::Base64: !Sub |
                 #!/bin/bash
                 
-                #Install AWS CLI and jq packages 
+                #Install AWS CLI, unzip and jq packages 
                 apt-get update -y
-                apt-get install awscli jq -y
+                apt-get install unzip jq -y
+                
+                curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                unzip awscliv2.zip
+                ./aws/install
+                
+                #Install SSM Agent 
+                snap install amazon-ssm-agent --classic
+                
+                #Install Session Manager
+                curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+                dpkg -i session-manager-plugin.deb
                 
                 #Get BastionHost Region
                 #Alternative way to call ${AWS::Region} pseudo parameter 
                 BastionHostRegion=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region`
+                export $BastionHostRegion
                 
                 #Download the SSH Key then copy it to ubuntu and root users SSH directory 
                 aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /root/.ssh/BastionPrivKey.pem
                 aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /home/ubuntu/.ssh/BastionPrivKey.pem
                 
                 #Update SSH key files permissions and ownership
-                chmod 600 /root/.ssh/BastionPrivKey.pem
+                chmod 400 /root/.ssh/BastionPrivKey.pem
                 chown ubuntu:ubuntu /home/ubuntu/.ssh/BastionPrivKey.pem
-                chmod 600 /home/ubuntu/.ssh/BastionPrivKey.pem
-                
+                chmod 400 /home/ubuntu/.ssh/BastionPrivKey.pem
+                                              
             ImageId: !Ref BastionHostImageID
             KeyName: !Ref LinuxHostsSSHKey
             InstanceType: !Ref BastionHostInstanceType
@@ -597,3 +645,9 @@ Outputs:
         Value: !GetAtt BastionHost.PublicIp
         Export:
           Name: !Sub ${EnvironmentName}-BastionHost-PUB-IP
+    
+    WebAppAutoScalingGroup:
+        Description: A reference to Web Application AutoScaling Group Name
+        Value: !Ref WebAppGroup
+        Export:
+          Name: !Sub ${EnvironmentName}-WebApp-AutoScaling-Group

@@ -48,7 +48,9 @@ aws ssm delete-parameter --name /Dev/Udagram/EnvironmentName --region ${EnvValue
 aws ssm delete-parameter --name /Dev/Udagram/S3BucketName --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForS3 --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCF --region ${EnvValuesArr[1]}
-aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSM --region ${EnvValuesArr[1]}
+aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMRO --region ${EnvValuesArr[1]}
+aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMCore --region ${EnvValuesArr[1]}
+aws ssm delete-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCloudWatchAgent --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/VpcCIDR --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/PublicSubnet1CIDR --region ${EnvValuesArr[1]}
 aws ssm delete-parameter --name /Dev/Udagram/PublicSubnet2CIDR --region ${EnvValuesArr[1]}

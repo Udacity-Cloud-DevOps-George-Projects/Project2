@@ -5,9 +5,10 @@ function CreateStack ()
 
 #Validate CloudFormation YAML Template
 #Creation script will be terminated in case of template error to avoid creation of SSH Keys and SSM Parameters 
+echo ""
 echo -e "\e[1;32mTask1:\e[0m"
 echo "Validating CloudFormation Template file $TemplateFile...."
-if aws cloudformation validate-template --template-body file://$TemplateFile; then
+if aws cloudformation validate-template --template-body file://$TemplateFile > /dev/null ; then
     echo ""
     echo "Template file $TemplateFile is valid"
 else
@@ -27,7 +28,7 @@ echo ""
 echo -e "\e[1;32mTask3:\e[0m"
 echo "Copying the SSH key to your local SSH directory. File name is $HOME/.ssh/$SSHKeyName.pem"
 echo -e "${SSHKeyPair//_/\\n}" > $HOME/.ssh/$SSHKeyName.pem
-chmod 600 $HOME/.ssh/$SSHKeyName.pem
+chmod 400 $HOME/.ssh/$SSHKeyName.pem
 echo ""
 
 #Get Ubuntu server 18.04 Image AMI from the selected AWS region
@@ -40,7 +41,9 @@ aws ssm put-parameter --name /Dev/Udagram/EnvironmentName --value "Udagram-Dev-G
 aws ssm put-parameter --name /Dev/Udagram/S3BucketName --value "udagram-dev-code" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForS3 --value "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCF --value "arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess" --type String --overwrite --region $AWSRegion
-aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSM --value "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess" --type String --overwrite --region $AWSRegion
+aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMRO --value "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess" --type String --overwrite --region $AWSRegion
+aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForSSMCore --value "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore" --type String --overwrite --region $AWSRegion
+aws ssm put-parameter --name /Dev/Udagram/AWSManagedPolicyARNForCloudWatchAgent --value "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/VpcCIDR --value "10.0.0.0/16" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/PublicSubnet1CIDR --value "10.0.0.0/24" --type String --overwrite --region $AWSRegion
 aws ssm put-parameter --name /Dev/Udagram/PublicSubnet2CIDR --value "10.0.1.0/24" --type String --overwrite --region $AWSRegion
@@ -94,7 +97,7 @@ read WebAppIncNum
 #Menu to select the AWS Region on which the environment will be created 
 echo ""
 echo 'Select AWS Region to create the environment: '
-AWSAllowedRegions=("US East (Ohio)" "US East (N. Virginia)" "US West (N. California)" "US West (Oregon)" "Canada (Central)" "Africa (Cape Town)" "Asia Pacific (Hong Kong)"  "China (Beijing)" "Europe (Frankfurt)" "Europe (Ireland)" "Middle East (Bahrain)" "South America (São Paulo)" "Quit" )
+AWSAllowedRegions=("US East (Ohio)" "US East (N. Virginia)" "US West (N. California)" "US West (Oregon)" "Canada (Central)" "Africa (Cape Town)" "Asia Pacific (Hong Kong)"  "China (Beijing)" "Europe (Frankfurt)" "Europe (Ireland)" "Middle East (Bahrain)" "South America (Sao Paulo)" "Quit" )
 select UserRegion in "${AWSAllowedRegions[@]}"
 do
     case $UserRegion in
@@ -153,7 +156,7 @@ do
                 CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
             ;;
-        "South America (São Paulo)")
+        "South America (Sao Paulo)")
                 AWSRegion="sa-east-1"
                 CreateStack $StackName $TemplateFile $WebAppIncNum $AWSRegion
                 break
