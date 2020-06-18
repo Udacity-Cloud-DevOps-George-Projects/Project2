@@ -419,7 +419,7 @@ Resources:
               
           ImageId: !Ref WebAppImageID
           #SSH KeyName property is enabled when troubleshooting an issue on Web Application instances is needed only
-          #KeyName: !Ref LinuxHostsSSHKey
+          KeyName: !Ref LinuxHostsSSHKey
           SecurityGroups:
           - Ref: WebServerSecGroup
           InstanceType: !Ref WebAppInstanceType

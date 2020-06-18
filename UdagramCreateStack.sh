@@ -79,6 +79,20 @@ echo -e "Stack Creation has completed. Stack output are:"
 echo ""
 aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query Stacks[0].Outputs[*] --output table
 echo ""
+
+#List Web Applicayion instances IDs and Private IPs
+WebAppAutoSclaingGroupName=$(aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query 'Stacks[0].Outputs[?OutputKey==`WebAppAutoScalingGroup`].[OutputValue]' --output text)
+echo $WebAppAutoSclaingGroupName
+InstancesIDsArr=( $(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $WebAppAutoSclaingGroupName --query [AutoScalingGroups[*].Instances[*].[InstanceId]] --output text) )
+
+for i in "${InstancesIDsArr[@]}"
+do
+        InstancePrivateIP=`aws ec2 describe-instances --instance-ids $i  --query [Reservations[*].Instances[*].PrivateIpAddress] --output text`
+        echo -e "\e[1;34mInstance ID:\e[0m $i"
+        echo -e "\e[1;34mInstance Private IP:\e[0m $InstancePrivateIP"
+        echo ""
+done
+
 /bin/echo -e "\e[1;32mDone\e[0m"
 }
 
