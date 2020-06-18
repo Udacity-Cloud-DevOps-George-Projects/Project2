@@ -27,7 +27,7 @@ Parameters:
 
     AWSManagedPolicyARNForCloudWatchAgent:
         Type: 'AWS::SSM::Parameter::Value<String>'
-        Description: AWS CloudFormation Managed Policy ARN
+        Description: AWS CloudWatch Agent Managed Policy ARN
         Default: /Dev/Udagram/AWSManagedPolicyARNForCloudWatchAgent  
         
     VpcCIDR:
