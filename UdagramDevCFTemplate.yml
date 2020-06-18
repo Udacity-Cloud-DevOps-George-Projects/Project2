@@ -651,9 +651,3 @@ Outputs:
         Value: !GetAtt BastionHost.PublicIp
         Export:
           Name: !Sub ${EnvironmentName}-BastionHost-PUB-IP
-    
-    WebAppAutoScalingGroup:
-        Description: A reference to Web Application AutoScaling Group Name
-        Value: !Ref WebAppGroup
-        Export:
-          Name: !Sub ${EnvironmentName}-WebApp-AutoScaling-Group
