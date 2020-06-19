@@ -420,7 +420,7 @@ Resources:
               
           ImageId: !Ref WebAppImageID
           #SSH KeyName property is enabled when troubleshooting an issue on Web Application instances is needed only
-          #KeyName: !Ref LinuxHostsSSHKey
+          KeyName: !Ref LinuxHostsSSHKey
           SecurityGroups:
           - Ref: WebServerSecGroup
           InstanceType: !Ref WebAppInstanceType
@@ -546,20 +546,19 @@ Resources:
 
                 #Get BastionHost Region
                 #Alternative way to call ${AWS::Region} pseudo parameter 
-                #BastionHostRegion=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region`
-                #export $BastionHostRegion
+                BastionHostRegion=`curl -s http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region`
+                export $BastionHostRegion
                 
                 #Begin: This section is enabled only when troubleshooting is needed on Web Application servers
                 #SSH Agent forwarding can also be used to avoid downloading SSH keys on Bastion Host                
                 #Download the SSH Key then copy it to ubuntu and root users SSH directory 
-                #Section commented for now
-                #aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /root/.ssh/BastionPrivKey.pem
-                #aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /home/ubuntu/.ssh/BastionPrivKey.pem
+                aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /root/.ssh/BastionPrivKey.pem
+                aws ssm get-parameter --name /Dev/Udagram/SSHPrivateKey  --region=$BastionHostRegion --with-decryption --output text --query Parameter.Value > /home/ubuntu/.ssh/BastionPrivKey.pem
                 
                 #Update SSH key files permissions and ownership
-                #chmod 400 /root/.ssh/BastionPrivKey.pem
-                #chown ubuntu:ubuntu /home/ubuntu/.ssh/BastionPrivKey.pem
-                #chmod 400 /home/ubuntu/.ssh/BastionPrivKey.pem
+                chmod 400 /root/.ssh/BastionPrivKey.pem
+                chown ubuntu:ubuntu /home/ubuntu/.ssh/BastionPrivKey.pem
+                chmod 400 /home/ubuntu/.ssh/BastionPrivKey.pem
                 #End
                                               
             ImageId: !Ref BastionHostImageID
