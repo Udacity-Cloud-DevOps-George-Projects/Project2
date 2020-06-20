@@ -79,7 +79,7 @@ echo ""
 aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query Stacks[0].Outputs[*] --output table
 echo ""
 
-#List Web Applicayion instances IDs and Private IPs
+#List Web Application instances IDs and Private IPs
 WebAppAutoSclaingGroupName=$(aws cloudformation describe-stacks --stack-name $StackName --region $AWSRegion --query 'Stacks[0].Outputs[?OutputKey==`WebAppAutoScalingGroup`].[OutputValue]' --output text)
 echo $WebAppAutoSclaingGroupName
 InstancesIDsArr=( $(aws autoscaling describe-auto-scaling-groups --auto-scaling-group-name $WebAppAutoSclaingGroupName --query [AutoScalingGroups[*].Instances[*].[InstanceId]] --output text) )
